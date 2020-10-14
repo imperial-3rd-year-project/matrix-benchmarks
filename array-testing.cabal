@@ -35,6 +35,7 @@ executable array-bench
                        , accelerate
                        , accelerate-llvm-native
                        , accelerate-blas >=0.3.0.0
+                       , lens-accelerate
                        , criterion
                        , hmatrix
   hs-source-dirs:        benchmarks

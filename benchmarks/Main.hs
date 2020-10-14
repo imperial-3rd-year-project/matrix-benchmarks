@@ -133,6 +133,22 @@ makeMatrices' (row : col : dims) xs = matrix : makeMatrices' (col : dims) rest
     (vals, rest) = splitAt (row * col) xs
     matrix       = use $ Acc.fromList (Z :. row :. col) vals
 
+accPads :: Int -> Int              -- ^ Step and max
+        -> Acc (Acc.Matrix Double) -- ^ Matrix to pad
+        -> Acc (Acc.Matrix Double) -- ^ Padded matrix
+accPads step max mat = go mat
+  where
+    step' = use step
+    max'  = use max
+    go m  = let rc = unindex2 (shape m)
+             in (fst rc > max || snd rc > max) ? (m, go accPad mat step' step')
+
+hmatrixPad :: Acc (Acc.Matrix Double) -> Exp Int -> Exp Int -> Acc (Acc.Matrix Double)
+hmatrixPad mat row col = concatOn _2 (mat ++ right) bottom
+  where
+    rc     = unindex2 (shape mat)
+    right  = fill (index2 (fst rc) col)      (use 0)
+    bottom = fill (index2 row (snd rc + col) (use 0)
 
 {----------------------}
 {-- helper functions --}
