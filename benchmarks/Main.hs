@@ -7,22 +7,24 @@ import           Numeric.LinearAlgebra.Data as LA
 import           Numeric.LinearAlgebra.HMatrix ((<.>), mul)
 import           System.Random
 
+import           Data.Array.Accelerate as Acc hiding (take, drop, (>), (<), (||), uncurry, map)
+import           Data.Array.Accelerate.LLVM.Native as CPU
+import qualified Data.Array.Accelerate.Numeric.LinearAlgebra as NLA
+
 main :: IO ()
 main = defaultMain
-     [ fixedSizeMult 100    42
-     , varSizeMult   100    39 43
-     , dotProd       100000 234
-     , padding     2 100
+     [ fixedSizeMult 1000    42
+     , varSizeMult   1000    39 43
+     , dotProd       1000000 234
+     , padding     2 1000
      ]
 
 fixedSizeMult :: Int -> Int -> Benchmark
 fixedSizeMult n seed = bgroup "Fixed size array multiplication"
   [ bench "hmatrix"
     $ nf (foldl1 mul) (take n $ hmatrixRandFixed 128 0 1 $ mkStdGen seed)
-  {-
   , bench "accelerate"
-    $ nf (run . foldl1 (<>)) (take n $ accRandFixed 128 0 1 $ mkStdGen seed)
-  -}
+    $ nf (CPU.run . foldl1 (NLA.<>)) (take n $ accRandFixed 128 0 1 $ mkStdGen seed)
   ]
 
 
@@ -30,10 +32,8 @@ varSizeMult :: Int -> Int -> Int -> Benchmark
 varSizeMult n seed1 seed2 = bgroup "Fixed size array multiplication"
   [ bench "hmatrix"
     $ nf (foldl1 mul) (take n $ hmatrixRandVar 100 156 (mkStdGen seed1) 0 1 (mkStdGen seed2))
-  {-
   , bench "accelerate"
-    $ nf (run . foldl1 (<>)) (take n $ accRandVar 100 156 (mkStdGen seed1) 0 1 (mkStdGen seed))
-  -}
+    $ nf (CPU.run . foldl1 (NLA.<>)) (take n $ accRandVar 100 156 (mkStdGen seed1) 0 1 (mkStdGen seed2))
   ]
 
 dotProd :: Int -> Int -> Benchmark
@@ -41,6 +41,8 @@ dotProd n seed
   = bgroup "Dot Product"
   [ bench "hmatrix"
     $ nf (uncurry (<.>)) (hmatrixRandVec n 0 1 (mkStdGen seed))
+  , bench "accelerate"
+    $ nf (CPU.run . uncurry (NLA.<.>)) (accRandVec n 0 1 (mkStdGen seed))  
   ]
 
 padding :: Int -> Int -> Benchmark
@@ -71,7 +73,7 @@ hmatrixRandVar smin smax srng vmin vmax vrng
 hmatrixRandVec :: RandomGen g
                => Int                            -- ^ Size
                -> Double -> Double -> g          -- ^ Min and max vals, val rng
-               -> (Vector Double, Vector Double) -- ^ Vectors
+               -> (LA.Vector Double, LA.Vector Double) -- ^ Vectors
 hmatrixRandVec size vmin vmax vrng
   = let (vec1 : vec2 : _) = chunksOf size (randomRs (vmin, vmax) vrng)
     in (LA.fromList vec1, LA.fromList vec2)
@@ -102,7 +104,7 @@ makeMatrices (row : col : dims) xs = matrix : makeMatrices (col : dims) rest
 {-- accelerate functions --}
 {--------------------------}
 
-{-
+
 accRandFixed :: RandomGen g
              => Int                       -- ^ Array size
              -> Double -> Double -> g     -- ^ Min and max vals, val rng
@@ -123,14 +125,14 @@ accRandVec :: RandomGen g
                -> (Acc (Acc.Vector Double), Acc (Acc.Vector Double)) -- ^ Vectors
 accRandVec size vmin vmax vrng
   = let (vec1 : vec2 : _) = chunksOf size (randomRs (vmin, vmax) vrng)
-    in (Acc.fromList (Z :. size) vec1, Acc.fromList (Z :. size) vec2)
+    in (use $ Acc.fromList (Z :. size) vec1, use $ Acc.fromList (Z :. size) vec2)
 
-makeMatrices' :: [Int] -> [a] -> [Acc (Acc.Matrix Double)]
+makeMatrices' :: [Int] -> [Double] -> [Acc (Acc.Matrix Double)]
 makeMatrices' (row : col : dims) xs = matrix : makeMatrices' (col : dims) rest
   where
     (vals, rest) = splitAt (row * col) xs
-    matrix       = Acc.fromList (Z :. row :. col) vals
--}
+    matrix       = use $ Acc.fromList (Z :. row :. col) vals
+
 
 {----------------------}
 {-- helper functions --}
