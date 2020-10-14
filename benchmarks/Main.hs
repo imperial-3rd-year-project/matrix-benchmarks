@@ -49,12 +49,13 @@ dotProd n seed
   ]
 
 padding :: Int -> Int -> Benchmark
-padding step max
+padding step n
   = bgroup "Padding"
   [ bench "hmatrix"
-    $ nf (hmatrixPads step max) (konst 10 (5, 5))
+    $ nf (head . drop n . iterate (hmatrixPad step step)) (konst 10 (5, 5))
   , bench "accelerate"
-    $ nf (CPU.run . accPads step max) (Acc.fill (Acc.index2 (Acc.constant 5) (Acc.constant 5)) (Acc.constant 10))
+    $ nf (CPU.run . head . drop n . iterate (accPads (constant step) (constant step)))
+         (Acc.fill (Acc.index2 (Acc.constant 5) (Acc.constant 5)) (Acc.constant 10))
   ]
 
 {-----------------------}
@@ -83,18 +84,8 @@ hmatrixRandVec size vmin vmax vrng
   = let (vec1 : vec2 : _) = chunksOf size (randomRs (vmin, vmax) vrng)
     in (LA.fromList vec1, LA.fromList vec2)
 
-hmatrixPads :: Int              -- ^ Step
-            -> Int              -- ^ Max
-            -> LA.Matrix Double -- ^ Matrix to pad
-            -> LA.Matrix Double -- ^ Padded matrix
-hmatrixPads step max mat = go mat
-  where go m
-          | cols m > max || rows m > max = m
-          | otherwise                    = go (hmatrixPad m step step)
-  
-
-hmatrixPad :: LA.Matrix Double -> Int -> Int -> LA.Matrix Double
-hmatrixPad mat row col = (mat ||| right) === bottom
+hmatrixPad :: Int -> Int -> LA.Matrix Double -> LA.Matrix Double
+hmatrixPad row col mat = (mat ||| right) === bottom
   where
     right  = konst 0 (rows mat, col)
     bottom = konst 0 (row, cols mat + col)
@@ -138,19 +129,8 @@ makeMatrices' (row : col : dims) xs = matrix : makeMatrices' (col : dims) rest
     (vals, rest) = splitAt (row * col) xs
     matrix       = Acc.use $ Acc.fromList (Acc.Z Acc.:. row Acc.:. col) vals
 
-accPads :: Int -> Int              -- ^ Step and max
-        -> Acc (Acc.Matrix Double) -- ^ Matrix to pad
-        -> Acc (Acc.Matrix Double) -- ^ Padded matrix
-accPads step max mat = go mat
-  where
-    step' = Acc.constant step
-    max'  = Acc.constant max
-    go :: Acc (Acc.Matrix Double) -> Acc (Acc.Matrix Double)
-    go m  = let rc = Acc.unindex2 (Acc.shape m)
-             in (Acc.fst rc Acc.> max' Acc.|| Acc.snd rc Acc.> max') Acc.?| (m, go (accPad m step' step'))
-
-accPad :: Acc (Acc.Matrix Double) -> Acc.Exp Int -> Acc.Exp Int -> Acc (Acc.Matrix Double)
-accPad mat row col = Acc.concatOn _2 (mat Acc.++ right) bottom
+accPad :: Acc.Exp Int -> Acc.Exp Int -> Acc (Acc.Matrix Double) -> Acc (Acc.Matrix Double)
+accPad row col mat = Acc.concatOn _2 (mat Acc.++ right) bottom
   where
     rc     = Acc.unindex2 (Acc.shape mat)
     right  = Acc.fill (Acc.index2 (Acc.fst rc) col)       (Acc.constant 0)
