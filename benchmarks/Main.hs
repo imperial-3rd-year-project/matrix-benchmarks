@@ -7,9 +7,12 @@ import           Numeric.LinearAlgebra.Data as LA
 import           Numeric.LinearAlgebra.HMatrix ((<.>), mul)
 import           System.Random
 
-import           Data.Array.Accelerate as Acc hiding (take, drop, (>), (<), (||), uncurry, map)
+import qualified Data.Array.Accelerate as Acc
 import           Data.Array.Accelerate.LLVM.Native as CPU
 import qualified Data.Array.Accelerate.Numeric.LinearAlgebra as NLA
+
+import Data.Array.Accelerate.Control.Lens.Shape
+import Control.Lens.Tuple (_2)
 
 main :: IO ()
 main = defaultMain
@@ -50,6 +53,8 @@ padding step max
   = bgroup "Padding"
   [ bench "hmatrix"
     $ nf (hmatrixPads step max) (konst 10 (5, 5))
+  , bench "accelerate"
+    $ nf (CPU.run . accPads step max) (Acc.fill (Acc.index2 (Acc.constant 5) (Acc.constant 5)) (Acc.constant 10))
   ]
 
 {-----------------------}
@@ -125,30 +130,31 @@ accRandVec :: RandomGen g
                -> (Acc (Acc.Vector Double), Acc (Acc.Vector Double)) -- ^ Vectors
 accRandVec size vmin vmax vrng
   = let (vec1 : vec2 : _) = chunksOf size (randomRs (vmin, vmax) vrng)
-    in (use $ Acc.fromList (Z :. size) vec1, use $ Acc.fromList (Z :. size) vec2)
+    in (Acc.use $ Acc.fromList (Acc.Z Acc.:. size) vec1, Acc.use $ Acc.fromList (Acc.Z Acc.:. size) vec2)
 
 makeMatrices' :: [Int] -> [Double] -> [Acc (Acc.Matrix Double)]
 makeMatrices' (row : col : dims) xs = matrix : makeMatrices' (col : dims) rest
   where
     (vals, rest) = splitAt (row * col) xs
-    matrix       = use $ Acc.fromList (Z :. row :. col) vals
+    matrix       = Acc.use $ Acc.fromList (Acc.Z Acc.:. row Acc.:. col) vals
 
 accPads :: Int -> Int              -- ^ Step and max
         -> Acc (Acc.Matrix Double) -- ^ Matrix to pad
         -> Acc (Acc.Matrix Double) -- ^ Padded matrix
 accPads step max mat = go mat
   where
-    step' = use step
-    max'  = use max
-    go m  = let rc = unindex2 (shape m)
-             in (fst rc > max || snd rc > max) ? (m, go accPad mat step' step')
+    step' = Acc.constant step
+    max'  = Acc.constant max
+    go :: Acc (Acc.Matrix Double) -> Acc (Acc.Matrix Double)
+    go m  = let rc = Acc.unindex2 (Acc.shape m)
+             in (Acc.fst rc Acc.> max' Acc.|| Acc.snd rc Acc.> max') Acc.?| (m, go (accPad m step' step'))
 
-hmatrixPad :: Acc (Acc.Matrix Double) -> Exp Int -> Exp Int -> Acc (Acc.Matrix Double)
-hmatrixPad mat row col = concatOn _2 (mat ++ right) bottom
+accPad :: Acc (Acc.Matrix Double) -> Acc.Exp Int -> Acc.Exp Int -> Acc (Acc.Matrix Double)
+accPad mat row col = Acc.concatOn _2 (mat Acc.++ right) bottom
   where
-    rc     = unindex2 (shape mat)
-    right  = fill (index2 (fst rc) col)      (use 0)
-    bottom = fill (index2 row (snd rc + col) (use 0)
+    rc     = Acc.unindex2 (Acc.shape mat)
+    right  = Acc.fill (Acc.index2 (Acc.fst rc) col)       (Acc.constant 0)
+    bottom = Acc.fill (Acc.index2 row (Acc.snd rc + col)) (Acc.constant 0)
 
 {----------------------}
 {-- helper functions --}

@@ -49,11 +49,8 @@ data BasicNetwork = BasicNetwork [Acc (Matrix Double)] [Acc (Vector Double)]
 
 -- Force evaluation of the array and network
 
-eval :: (Shape sh, P.Num (Exp c), Elt c) => Acc (Array sh c) -> Acc (Array sh c)
-eval = use . CPU.run
-
 evalNet :: BasicNetwork -> BasicNetwork
-evalNet (BasicNetwork ws bs) = BasicNetwork (P.map eval ws) (P.map eval bs)
+evalNet (BasicNetwork ws bs) = BasicNetwork (P.map compute ws) (P.map compute bs)
 
 
 create :: [Int] -> BasicNetwork
@@ -98,8 +95,8 @@ train net n td epochs eta = train net' n td (epochs - 1) eta
       where
         (nablaB, nablaW) = descend td'
         (deltaNablaB, deltaNablaW) = backprop x y net
-        nablaB' = [ nb ^+^ dnb | (nb, dnb) <- (P.zip nablaB deltaNablaB) ]
-        nablaW' = [ nw ^+^ dnw | (nw, dnw) <- (P.zip nablaW deltaNablaW) ]
+        nablaB' = [ nb ^+^ dnb | (nb, dnb) <- P.zip nablaB deltaNablaB ]
+        nablaW' = [ nw ^+^ dnw | (nw, dnw) <- P.zip nablaW deltaNablaW ]
     
     velocity = lift (eta / P.fromIntegral n)
     weights' = [w ^-^ (velocity *^ wb) | (w, wb) <- P.zip weights nablaW]
@@ -107,7 +104,7 @@ train net n td epochs eta = train net' n td (epochs - 1) eta
 
 
 backprop :: Acc (Vector Double) -> Acc (Vector Double) -> BasicNetwork -> ([Acc (Vector Double)], [Acc (Matrix Double)])
-backprop actual expected (BasicNetwork ws bs) = (P.map eval b, P.map eval w)
+backprop actual expected (BasicNetwork ws bs) = (P.map compute b, P.map compute w)
   where
     (b, w) = backprop' (P.tail ws) activations zs
     backprop' :: [Acc (Matrix Double)] 
