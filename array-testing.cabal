@@ -36,3 +36,17 @@ executable array-bench
                        , hmatrix
   hs-source-dirs:        benchmarks
   default-language:      Haskell2010
+
+executable neural
+  main-is:             Main.hs
+  other-modules:       Network, Network2
+  -- other-extensions:
+  build-depends:       base >=4.13.0.0 && <4.15
+                     , ad   >=4.4
+                     , accelerate >=1.3.0.0
+                     , accelerate-llvm-native >=1.3.0.0
+                     , accelerate-blas >=0.3.0.0
+                     , linear-accelerate >=0.7.0.0
+                     , hmatrix >=0.20.0.0
+  hs-source-dirs:      neuralnetwork
+  default-language:    Haskell2010
