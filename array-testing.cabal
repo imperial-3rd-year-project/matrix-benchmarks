@@ -37,6 +37,7 @@ executable array-bench
                        , accelerate-blas >=0.3.0.0
                        , lens-accelerate
                        , criterion
+                       , lens
                        , hmatrix
   hs-source-dirs:        benchmarks
   default-language:      Haskell2010
@@ -52,5 +53,5 @@ executable neural
                      , accelerate-blas >=0.3.0.0
                      , linear-accelerate >=0.7.0.0
                      , hmatrix >=0.20.0.0
-  hs-source-dirs:      neuralnetwork
+  hs-source-dirs:      neuralnetwork 
   default-language:    Haskell2010

@@ -19,7 +19,7 @@ main = defaultMain
      [ fixedSizeMult 1000    42
      , varSizeMult   1000    39 43
      , dotProd       1000000 234
-     , padding     2 1000
+     , padding       2 1000
      ]
 
 fixedSizeMult :: Int -> Int -> Benchmark
@@ -54,7 +54,7 @@ padding step n
   [ bench "hmatrix"
     $ nf (head . drop n . iterate (hmatrixPad step step)) (konst 10 (5, 5))
   , bench "accelerate"
-    $ nf (CPU.run . head . drop n . iterate (accPads (constant step) (constant step)))
+    $ nf (CPU.run . head . drop n . iterate (accPad (Acc.constant step) (Acc.constant step)))
          (Acc.fill (Acc.index2 (Acc.constant 5) (Acc.constant 5)) (Acc.constant 10))
   ]
 
