@@ -10,19 +10,19 @@ module Network (
   , feedforward
   , create
   , train
+  , evalNet
   ) where
 
 
 import Data.Array.Accelerate              as A hiding ((!!), length)
 import Data.Array.Accelerate.Numeric.LinearAlgebra hiding (trace)
 import Prelude as P
-
-import Data.Array.Accelerate.LLVM.Native  as CPU
-
-import Debug.Trace
+import Data.Array.Accelerate.LLVM.Native as CPU
 
 -- Utilities
 
+evalNet net = let BasicNetwork ws bs = net
+                in BasicNetwork (P.map (use . CPU.run) ws) (P.map (use . CPU.run) bs)
 
 (^+^) :: (Shape sh, P.Num (Exp c), Elt c) => Acc (Array sh c) -> Acc (Array sh c) -> Acc (Array sh c)
 u ^+^ v = A.zipWith (+) u v 
@@ -46,11 +46,6 @@ sigmoid' = \z -> sigmoid z * (1 - sigmoid z)
 
 data BasicNetwork = BasicNetwork [Acc (Matrix Double)] [Acc (Vector Double)]
   deriving Show
-
--- Force evaluation of the array and network
-
-evalNet :: BasicNetwork -> BasicNetwork
-evalNet (BasicNetwork ws bs) = BasicNetwork (P.map compute ws) (P.map compute bs)
 
 
 create :: [Int] -> BasicNetwork
@@ -79,10 +74,12 @@ type TrainingData = [ (Acc (Vector Double), Acc (Vector Double)) ]
 
 train :: BasicNetwork -> Int -> TrainingData -> Int -> Double -> BasicNetwork
 train net _ _ 0 _         = net
-train net n td epochs eta = train net' n td (epochs - 1) eta
+train net n td epochs eta = train net'' n td (epochs - 1) eta
   where
     BasicNetwork weights biases = net
-    net' = evalNet $ BasicNetwork weights' biases'
+    net' = BasicNetwork weights' biases'
+    net'' = let BasicNetwork ws bs = net'
+              in BasicNetwork (P.map (use . CPU.run) ws) (P.map (use . CPU.run) bs)
     
     nablaB :: [ Acc (Vector Double) ]
     nablaW :: [ Acc (Matrix Double) ]
@@ -104,7 +101,7 @@ train net n td epochs eta = train net' n td (epochs - 1) eta
 
 
 backprop :: Acc (Vector Double) -> Acc (Vector Double) -> BasicNetwork -> ([Acc (Vector Double)], [Acc (Matrix Double)])
-backprop actual expected (BasicNetwork ws bs) = (P.map compute b, P.map compute w)
+backprop actual expected (BasicNetwork ws bs) = (b, w)
   where
     (b, w) = backprop' (P.tail ws) activations zs
     backprop' :: [Acc (Matrix Double)] 

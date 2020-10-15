@@ -20,10 +20,11 @@ main = do
   putStrLn "Begin"
   start <- getCPUTime
   let net' = AccNet.train net 4 xorData 100 2
-  putStrLn $ show $ CPU.run $ AccNet.feedforward net' (use $ (A.fromList (Z :. 2) [0, 0] :: A.Vector Double))
-  putStrLn $ show $ CPU.run $ AccNet.feedforward net' (use $ (A.fromList (Z :. 2) [1, 0] :: A.Vector Double))
-  putStrLn $ show $ CPU.run $ AccNet.feedforward net' (use $ (A.fromList (Z :. 2) [1, 1] :: A.Vector Double))
-  putStrLn $ show $ CPU.run $ AccNet.feedforward net' (use $ (A.fromList (Z :. 2) [0, 1] :: A.Vector Double))
+  let feedforward' = CPU.runN (AccNet.feedforward net')
+  putStrLn $ show $ feedforward' (A.fromList (Z :. 2) [0, 0] :: A.Vector Double)
+  putStrLn $ show $ feedforward' (A.fromList (Z :. 2) [1, 0] :: A.Vector Double)
+  putStrLn $ show $ feedforward' (A.fromList (Z :. 2) [1, 1] :: A.Vector Double)
+  putStrLn $ show $ feedforward' (A.fromList (Z :. 2) [0, 1] :: A.Vector Double)
   end   <- getCPUTime
   putStrLn "End"
   let diff = (Prelude.fromIntegral (end - start)) / (10 Prelude.^ 12)
