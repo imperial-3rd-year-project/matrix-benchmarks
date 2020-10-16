@@ -25,9 +25,9 @@ main = defaultMain
 fixedSizeMult :: Int -> Int -> Benchmark
 fixedSizeMult n seed = bgroup "Fixed size array multiplication"
   [ bench "hmatrix"
-    $ nf (foldl1 mul) (take n $ hmatrixRandFixed 128 0 1 $ mkStdGen seed)
+    $ nf (foldl1 mul)                (take n $ hmatrixRandFixed 128 0 1 $ mkStdGen seed)
   , bench "accelerate"
-    $ nf (CPU.run . foldl1 (NLA.<>)) (take n $ accRandFixed 128 0 1 $ mkStdGen seed)
+    $ nf (CPU.run . foldl1 (NLA.<>)) (take n $ accRandFixed 128 0 1     $ mkStdGen seed)
   ]
 
 
@@ -53,10 +53,13 @@ padding step n
   = bgroup "Padding"
   [ bench "hmatrix"
     $ nf (head . drop n . iterate (hmatrixPad step step)) (konst 10 (5, 5))
-  , bench "accelerate"
-    $ nf (CPU.run . head . drop n . iterate (accPad (Acc.constant step) (Acc.constant step)))
-         (Acc.fill (Acc.index2 (Acc.constant 5) (Acc.constant 5)) (Acc.constant 10))
+  , bench "accelerate - run"
+    $ nf (CPU.run . head . drop n . iterate (accPad step step))  accmat
+  , bench "accelerate - run1"
+    $ nf (head . drop n . iterate (CPU.run1 (accPad step step))) accmat
   ]
+    where
+      accmat = Acc.fill (Acc.index2 (Acc.constant 5) (Acc.constant 5)) (Acc.constant 10)
 
 {-----------------------}
 {-- hmatrix functions --}
@@ -109,9 +112,9 @@ accRandFixed size vmin vmax vrng
   = makeMatrices' (repeat size) (randomRs (vmin, vmax) vrng)
 
 accRandVar :: RandomGen g
-               => Int -> Int -> g           -- ^ Min and max size, size rng
-               -> Double -> Double -> g     -- ^ Min and max vals, val rng
-               -> [Acc (Acc.Matrix Double)] -- ^ Arrays
+           => Int -> Int -> g           -- ^ Min and max size, size rng
+           -> Double -> Double -> g     -- ^ Min and max vals, val rng
+           -> [Acc (Acc.Matrix Double)] -- ^ Arrays
 accRandVar smin smax srng vmin vmax vrng
   = makeMatrices' (randomRs (smin, smax) srng) (randomRs (vmin, vmax) vrng)
 
@@ -121,7 +124,8 @@ accRandVec :: RandomGen g
                -> (Acc (Acc.Vector Double), Acc (Acc.Vector Double)) -- ^ Vectors
 accRandVec size vmin vmax vrng
   = let (vec1 : vec2 : _) = chunksOf size (randomRs (vmin, vmax) vrng)
-    in (Acc.use $ Acc.fromList (Acc.Z Acc.:. size) vec1, Acc.use $ Acc.fromList (Acc.Z Acc.:. size) vec2)
+    in ( Acc.use $ Acc.fromList (Acc.Z Acc.:. size) vec1
+       , Acc.use $ Acc.fromList (Acc.Z Acc.:. size) vec2 )
 
 makeMatrices' :: [Int] -> [Double] -> [Acc (Acc.Matrix Double)]
 makeMatrices' (row : col : dims) xs = matrix : makeMatrices' (col : dims) rest
@@ -129,12 +133,14 @@ makeMatrices' (row : col : dims) xs = matrix : makeMatrices' (col : dims) rest
     (vals, rest) = splitAt (row * col) xs
     matrix       = Acc.use $ Acc.fromList (Acc.Z Acc.:. row Acc.:. col) vals
 
-accPad :: Acc.Exp Int -> Acc.Exp Int -> Acc (Acc.Matrix Double) -> Acc (Acc.Matrix Double)
+accPad :: Int -> Int -> Acc (Acc.Matrix Double) -> Acc (Acc.Matrix Double)
 accPad row col mat = Acc.concatOn _2 (mat Acc.++ right) bottom
   where
+    row'   = Acc.constant row
+    col'   = Acc.constant col
     rc     = Acc.unindex2 (Acc.shape mat)
-    right  = Acc.fill (Acc.index2 (Acc.fst rc) col)       (Acc.constant 0)
-    bottom = Acc.fill (Acc.index2 row (Acc.snd rc + col)) (Acc.constant 0)
+    right  = Acc.fill (Acc.index2 (Acc.fst rc) col')        (Acc.constant 0)
+    bottom = Acc.fill (Acc.index2 row' (Acc.snd rc + col')) (Acc.constant 0)
 
 {----------------------}
 {-- helper functions --}
