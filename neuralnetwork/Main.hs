@@ -17,10 +17,11 @@ main = do
   let xorData = [ (use $ (A.fromList (Z :. 2) x :: A.Vector Double), use $ (A.fromList (Z :. 1) y :: A.Vector Double)) | 
                   (x, y) <- Prelude.zip input expected ]
   let net  = AccNet.create [2, 2, 1]
-  putStrLn "Begin"
+  let epochs = 100
+  putStrLn $ "Begin training for " Prelude.++ show epochs Prelude.++ " epochs (accelerate)"
   start <- getCPUTime
-  let net' = AccNet.train net 4 xorData 100 2
-  let feedforward' = CPU.runN (AccNet.feedforward net')
+  let net' = AccNet.train net 4 xorData epochs 2
+  let feedforward' = CPU.run1 (AccNet.feedforward net')
   putStrLn $ show $ feedforward' (A.fromList (Z :. 2) [0, 0] :: A.Vector Double)
   putStrLn $ show $ feedforward' (A.fromList (Z :. 2) [1, 0] :: A.Vector Double)
   putStrLn $ show $ feedforward' (A.fromList (Z :. 2) [1, 1] :: A.Vector Double)
@@ -32,9 +33,9 @@ main = do
   
   let xorData = [ (NLA.fromList i, NLA.fromList e) | (i, e) <- Prelude.zip input expected ]
   let net  = HNet.create [2, 2, 1]
-  putStrLn "Begin"
+  putStrLn $ "Begin training for " Prelude.++ show epochs Prelude.++ " epochs (hmatrix)"
   start <- getCPUTime
-  let net' = HNet.train net 4 xorData 100 2
+  let net' = HNet.train net 4 xorData epochs 2
   putStrLn $ show $ HNet.feedforward net' (NLA.fromList [0, 0])
   putStrLn $ show $ HNet.feedforward net' (NLA.fromList [0, 1])
   putStrLn $ show $ HNet.feedforward net' (NLA.fromList [1, 0])
