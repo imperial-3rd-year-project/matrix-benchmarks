@@ -1,0 +1,80 @@
+benchmarking Fixed size matrix multiplication, 10 128x128 matrices/hmatrix
+time                 682.0 $\mu$s   (582.9 $\mu$s .. 751.4 $\mu$s)
+                     0.901 R${}^2$   (0.861 R${}^2$ .. 0.931 R${}^2$)
+mean                 496.5 $\mu$s   (446.8 $\mu$s .. 555.9 $\mu$s)
+std dev              165.8 $\mu$s   (126.5 $\mu$s .. 198.1 $\mu$s)
+variance introduced by outliers: 97% (severely inflated)
+
+benchmarking Fixed size matrix multiplication, 10 128x128 matrices/accelerate
+time                 5.235 ms   (3.569 ms .. 6.800 ms)
+                     0.538 R${}^2$   (0.273 R${}^2$ .. 0.766 R${}^2$)
+mean                 8.206 ms   (6.921 ms .. 9.806 ms)
+std dev              3.713 ms   (2.729 ms .. 5.311 ms)
+variance introduced by outliers: 97% (severely inflated)
+
+benchmarking Fixed size matrix multiplication, 10 128x128 matrices/massiv
+time                 14.84 ms   (14.40 ms .. 15.17 ms)
+                     0.995 R${}^2$   (0.988 R${}^2$ .. 0.999 R${}^2$)
+mean                 15.05 ms   (14.76 ms .. 15.19 ms)
+std dev              507.6 $\mu$s   (314.2 $\mu$s .. 887.5 $\mu$s)
+variance introduced by outliers: 11% (moderately inflated)
+
+benchmarking Variable size matrix multiplication, 10 nxm matrices, 128 <= n, m <= 156/hmatrix
+time                 1.352 ms   (1.240 ms .. 1.474 ms)
+                     0.965 R${}^2$   (0.949 R${}^2$ .. 0.988 R${}^2$)
+mean                 1.209 ms   (1.166 ms .. 1.264 ms)
+std dev              160.3 $\mu$s   (87.94 $\mu$s .. 231.3 $\mu$s)
+variance introduced by outliers: 83% (severely inflated)
+
+benchmarking Variable size matrix multiplication, 10 nxm matrices, 128 <= n, m <= 156/accelerate
+time                 3.433 ms   (2.643 ms .. 4.391 ms)
+                     0.532 R${}^2$   (0.369 R${}^2$ .. 0.735 R${}^2$)
+mean                 4.495 ms   (3.703 ms .. 5.905 ms)
+std dev              3.185 ms   (2.023 ms .. 5.194 ms)
+variance introduced by outliers: 98% (severely inflated)
+
+benchmarking Variable size matrix multiplication, 10 nxm matrices, 128 <= n, m <= 156/massiv
+time                 19.69 ms   (19.38 ms .. 20.02 ms)
+                     0.998 R${}^2$   (0.996 R${}^2$ .. 0.999 R${}^2$)
+mean                 19.63 ms   (19.35 ms .. 19.83 ms)
+std dev              569.3 $\mu$s   (449.3 $\mu$s .. 819.7 $\mu$s)
+
+benchmarking Dot Product between vectors of length 1000000/hmatrix
+time                 2.489 ms   (2.486 ms .. 2.493 ms)
+                     1.000 R${}^2$   (1.000 R${}^2$ .. 1.000 R${}^2$)
+mean                 2.499 ms   (2.496 ms .. 2.505 ms)
+std dev              13.24 $\mu$s   (7.178 $\mu$s .. 22.28 $\mu$s)
+
+benchmarking Dot Product between vectors of length 1000000/accelerate
+time                 1.066 ms   (1.004 ms .. 1.118 ms)
+                     0.980 R${}^2$   (0.971 R${}^2$ .. 0.987 R${}^2$)
+mean                 1.068 ms   (1.027 ms .. 1.153 ms)
+std dev              209.0 $\mu$s   (135.6 $\mu$s .. 354.2 $\mu$s)
+variance introduced by outliers: 92% (severely inflated)
+
+benchmarking Dot Product between vectors of length 1000000/massiv
+time                 1.157 ms   (1.109 ms .. 1.192 ms)
+                     0.992 R${}^2$   (0.985 R${}^2$ .. 0.997 R${}^2$)
+mean                 1.184 ms   (1.165 ms .. 1.198 ms)
+std dev              60.25 $\mu$s   (41.31 $\mu$s .. 88.15 $\mu$s)
+variance introduced by outliers: 39% (moderately inflated)
+
+benchmarking Padding matrices starting at size 5x5 in steps of 2 upto 50/hmatrix
+time                 4.279 ms   (4.245 ms .. 4.311 ms)
+                     1.000 R${}^2$   (0.999 R${}^2$ .. 1.000 R${}^2$)
+mean                 4.260 ms   (4.238 ms .. 4.295 ms)
+std dev              84.16 $\mu$s   (49.32 $\mu$s .. 145.5 $\mu$s)
+
+benchmarking Padding matrices starting at size 5x5 in steps of 2 upto 50/accelerate
+time                 7.018 ms   (6.397 ms .. 7.538 ms)
+                     0.945 R${}^2$   (0.909 R${}^2$ .. 0.971 R${}^2$)
+mean                 6.839 ms   (6.523 ms .. 7.216 ms)
+std dev              976.9 $\mu$s   (804.2 $\mu$s .. 1.233 ms)
+variance introduced by outliers: 74% (severely inflated)
+
+benchmarking Padding matrices starting at size 5x5 in steps of 2 upto 50/massiv
+time                 5.127 ms   (5.085 ms .. 5.188 ms)
+                     0.999 R${}^2$   (0.999 R${}^2$ .. 1.000 R${}^2$)
+mean                 5.118 ms   (5.103 ms .. 5.136 ms)
+std dev              56.46 $\mu$s   (40.94 $\mu$s .. 85.01 $\mu$s)
+

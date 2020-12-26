@@ -39,6 +39,8 @@ executable array-bench
                        , criterion
                        , lens
                        , hmatrix
+                       , massiv
+  ghc-options:           -O2 -threaded -rtsopts -with-rtsopts=-N
   hs-source-dirs:        benchmarks
   default-language:      Haskell2010
 
