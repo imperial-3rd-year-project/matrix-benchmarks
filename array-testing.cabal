@@ -46,7 +46,7 @@ executable array-bench
 
 executable neural
   main-is:             Main.hs
-  other-modules:       Network, Network2
+  other-modules:       Network, Network2, UnrolledNetwork
   -- other-extensions:
   build-depends:       base >=4.13.0.0 && <4.15
                      , ad   >=4.4

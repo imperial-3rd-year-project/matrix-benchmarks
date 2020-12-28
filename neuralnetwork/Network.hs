@@ -81,7 +81,7 @@ train :: BasicNetwork -> Int -> TrainingData -> Int -> Double -> BasicNetwork
 train net n td epochs eta = loop epochs net
   where
     loop 0 net = net
-    loop !epochs (BasicNetwork weights biases) = loop (epochs - 1) net'
+    loop !epochs net@(BasicNetwork weights biases) = loop (epochs - 1) net'
       where
         net' = BasicNetwork weights' biases'
         
