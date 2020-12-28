@@ -14,7 +14,7 @@ main :: IO ()
 main = do
   let input    = Prelude.reverse [[1, 0], [0, 1], [1, 1], [0, 0]]
   let expected = Prelude.reverse [[1],    [1],    [0],    [0]   ]
-  let xorData = [ (use $ (A.fromList (Z :. 2) x :: A.Vector Double), use $ (A.fromList (Z :. 1) y :: A.Vector Double)) | 
+  let xorData = [ ((A.fromList (Z :. 2) x :: A.Vector Double), (A.fromList (Z :. 1) y :: A.Vector Double)) | 
                   (x, y) <- Prelude.zip input expected ]
   let net  = AccNet.create [2, 2, 1]
   let epochs = 100
